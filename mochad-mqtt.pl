@@ -154,7 +154,7 @@ sub read_config_file {
     }
 
     for my $code ( @{ $conf->{'ignore'} } ) {
-        unless ( $code =~ m{([A-Za-z])([\d,-]+)} ) {
+        unless ( $code =~ m{([A-Fa-f\d]{2}:[A-Fa-f\d]{2}:[A-Fa-f\d]{2})} || $code =~ m{([A-Za-z])([\d,-]+)} ) {
             AE::log error => "Bad device definition: $code";
             next;
         }
@@ -194,7 +194,10 @@ sub read_config_file {
 
         for my $code (@tmpcode) {
             $code = uc $code;
-            if ( $code =~ m{([A-Za-z])([\d,-]+)} ){
+            if ($code =~ m{([A-Fa-f\d]{2}:[A-Fa-f\d]{2}:[A-Fa-f\d]{2})}) {
+                push (@devcodes, uc $1);
+            }
+            elsif ( $code =~ m{([A-Za-z])([\d,-]+)} ){
                 my $house = uc $1;
                 my @codes = str_range($2);
                 foreach my $i ( 0 .. scalar @codes ) {
@@ -209,9 +212,6 @@ sub read_config_file {
                         $appls{$house}{$i} = 1;
                     }
                 }
-            } 
-            elsif ($code =~ m{([A-Fa-f\d]{2}:[A-Fa-f\d]{2}:[A-Fa-f\d]{2})}) {
-                push (@devcodes, uc $1);
             }
             else {
                 AE::log error => "$alias: Bad device definition: $code";
