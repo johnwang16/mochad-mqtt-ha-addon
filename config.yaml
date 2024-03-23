@@ -42,7 +42,7 @@ schema:
   devices:
     - name: str
       code: str
-      type: list(switch|light|sensor|remote)
+      type: list(switch|light|sensor|remote|rfsec)
       retain: bool?
   mqtt:
     - host: str
