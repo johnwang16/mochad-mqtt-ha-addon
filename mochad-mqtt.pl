@@ -650,7 +650,7 @@ sub process_x10_cmd {
     $cmd    = lc $cmd;
     $device = lc $device;
 
-    unless ( defined $cmds{$cmd} ) {
+    unless ( $device =~ m{[A-Fa-f\d]{2}:[A-Fa-f\d]{2}:[A-Fa-f\d]{2}} && defined $cmds{$cmd} ) {
         AE::log error => "unexpected command $device: $cmd";
         return;
     }
