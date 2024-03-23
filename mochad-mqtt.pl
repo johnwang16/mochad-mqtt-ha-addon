@@ -81,6 +81,8 @@ my %cmds = (
     alloff    => 'all_units_off',
     lightson  => 'all_lights_on',
     lightsoff => 'all_lights_off',
+    contactalert => 'contact_alert',
+    contactnormal => 'contact_normal',
 );
 
 #
@@ -95,6 +97,7 @@ my %types = (
     switch    => 1,
     light     => 2,
     remote    => 4,
+    rfsec     => 3,
 );
 
 # List of all lights
@@ -193,24 +196,31 @@ sub read_config_file {
 
         for my $code (@tmpcode) {
             $code = uc $code;
-          unless ( $code =~ m{([A-Za-z])([\d,-]+)} ) {
+            if ( $code =~ m{([A-Za-z])([\d,-]+)} ){
+                my $house = uc $1;
+                my @codes = str_range($2);
+                foreach my $i ( 0 .. scalar @codes ) {
+                    next unless ( $codes[$i] );
+                    push( @devcodes, $house . $i );
+                        
+                    if ( $type == 2 ) {
+                        $lights{$house}{$i} = 1;
+                        $appls{$house}{$i}  = 1;
+                    }
+                    elsif ( $type == 1 ) {
+                        $appls{$house}{$i} = 1;
+                    }
+                }
+            } 
+            elsif ($code =~ m{([A-Fa-f\d]{2}:[A-Fa-f\d]{2}:[A-Fa-f\d]{2})}) {
+                my $code =  $1;
+                push (@devcodes, $code);
+            }
+            else {
                 AE::log error => "$alias: Bad device definition: $code";
                 $err = 1;
             }
-            my $house = uc $1;
-            my @codes = str_range($2);
-           foreach my $i ( 0 .. scalar @codes ) {
-                next unless ( $codes[$i] );
-                push( @devcodes, $house . $i );
-					
-                if ( $type == 2 ) {
-                    $lights{$house}{$i} = 1;
-                    $appls{$house}{$i}  = 1;
-                }
-                elsif ( $type == 1 ) {
-                    $appls{$house}{$i} = 1;
-                }
-            }
+            
         }
 
         if ($err) {
@@ -599,7 +609,7 @@ sub process_x10_line {
         my $cmd   = lc $3;
         process_x10_cmd( $cmd, "$house$unit" );
     }
-   elsif ( $input =~ m{ HouseUnit:\s+([A-Z])(\d+)}i ) {
+    elsif ( $input =~ m{ HouseUnit:\s+([A-Z])(\d+)}i ) {
         my $house = uc $1;
         my $unit  = $2;
         AE::log debug => "House=$house Unit=$unit";
@@ -622,6 +632,13 @@ sub process_x10_line {
         elsif ( $cmd =~ m{all\s+(\w+)\s+(\w+)} ) {
             process_x10_cmd( "$1$2", $house );
         }
+    }
+    elsif ( $input =~ m{ RFSEC\sAddr:\s([A-Z:\d]+)\sFunc:\s([a-z]+)_([a-z]+)_([a-z]+)_([a-z]+)_([a-z\d]+)}i ) {
+        my $addr = $1;
+        my $event_type = lc $2;
+        my $event_state = $3;
+        process_x10_cmd($event_type . "_" . $event_state, $addr);
+
     }
     else {
         AE::log error => "Unmatched: $input";
@@ -711,6 +728,22 @@ sub process_x10_cmd {
             $published{$alias} = 1;
         }
         store_state();
+    }
+    elsif ( $device =~ m{[A-Fa-f\d]{2}:[A-Fa-f\d]{2}:[A-Fa-f\d]{2}} ){
+        my %status;
+        $status{'devicecode'} = $device;
+        $status{'command'}  = $cmd;
+        my $alias =
+            defined $devcodes{$device} ? $devcodes{$device} : $device;
+
+        if ( $cmd =~ m{alert$} ) {
+            $status{'state'} = 'on';
+        }
+        else {
+            $status{'state'} = 'off';
+        }
+        send_mqtt_status( $alias, \%status );
+        save_state( $alias, \%status );
     }
     else {
         AE::log error => "unexpected $device: $cmd";
