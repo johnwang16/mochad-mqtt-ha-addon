@@ -1,6 +1,6 @@
 ---
 name: "mochad-mqtt-ha-addon"
-version: 1.1.5
+version: 1.1.6
 slug: "mochad-mqtt-ha-addon"
 description: >
   Make X10 devices appear as MQTT devices. 
