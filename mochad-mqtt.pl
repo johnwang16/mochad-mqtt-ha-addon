@@ -210,8 +210,8 @@ sub read_config_file {
                     }
                 }
             } 
-            elsif ($code =~ m{[A-Fa-f\d]{2}:[A-Fa-f\d]{2}:[A-Fa-f\d]{2}}) {
-                push (@devcodes, uc $code);
+            elsif ($code =~ m{([A-Fa-f\d]{2}:[A-Fa-f\d]{2}:[A-Fa-f\d]{2})}) {
+                push (@devcodes, uc $1);
             }
             else {
                 AE::log error => "$alias: Bad device definition: $code";
