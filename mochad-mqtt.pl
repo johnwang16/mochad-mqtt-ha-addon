@@ -81,8 +81,6 @@ my %cmds = (
     alloff    => 'all_units_off',
     lightson  => 'all_lights_on',
     lightsoff => 'all_lights_off',
-    contactalert => 'contact_alert',
-    contactnormal => 'contact_normal',
 );
 
 #
@@ -633,11 +631,10 @@ sub process_x10_line {
             process_x10_cmd( "$1$2", $house );
         }
     }
-    elsif ( $input =~ m{ RFSEC\sAddr:\s([A-Z:\d]+)\sFunc:\s([a-z]+)_([a-z]+)_([a-z]+)_([a-z]+)_([a-z\d]+)}i ) {
+    elsif ( $input =~ m{ RFSEC\sAddr:\s([A-Z:\d]+)\sFunc:\s([a-z]+_[a-z]+_[a-z]+_[a-z]+_[a-z\d]+)}i ) {
         my $addr = $1;
-        my $event_type = lc $2;
-        my $event_state = $3;
-        process_x10_cmd($event_type . "_" . $event_state, $addr);
+        my $command = $2;
+        process_x10_cmd($command, $addr);
 
     }
     else {
@@ -732,18 +729,21 @@ sub process_x10_cmd {
     elsif ( $device =~ m{[A-Fa-f\d]{2}:[A-Fa-f\d]{2}:[A-Fa-f\d]{2}} ){
         my %status;
         $status{'devicecode'} = $device;
-        $status{'command'}  = $cmd;
-        my $alias =
-            defined $devcodes{$device} ? $devcodes{$device} : $device;
+        my $event;
+        if ( $event =~ m{([a-z]+)_([a-z]+)_([a-z]+)_([a-z]+)_([a-z\d]+)} ){
+            $status{'event'} = lc $1 . "_" . $2;
+            my $alias =
+                defined $devcodes{$device} ? $devcodes{$device} : $device;
 
-        if ( $cmd =~ m{alert$} ) {
-            $status{'state'} = 'on';
+            if ( $2 =~ m{alert} ) {
+                $status{'state'} = 'on';
+            }
+            else {
+                $status{'state'} = 'off';
+            }
+            send_mqtt_status( $alias, \%status );
+            save_state( $alias, \%status );
         }
-        else {
-            $status{'state'} = 'off';
-        }
-        send_mqtt_status( $alias, \%status );
-        save_state( $alias, \%status );
     }
     else {
         AE::log error => "unexpected $device: $cmd";
