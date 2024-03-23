@@ -211,7 +211,7 @@ sub read_config_file {
                 }
             } 
             elsif ($code =~ m{([A-Fa-f\d]{2}:[A-Fa-f\d]{2}:[A-Fa-f\d]{2})}) {
-                my $code =  $1;
+                my $code = uc $1;
                 push (@devcodes, $code);
             }
             else {
@@ -728,11 +728,11 @@ sub process_x10_cmd {
     }
     elsif ( $device =~ m{[A-Fa-f\d]{2}:[A-Fa-f\d]{2}:[A-Fa-f\d]{2}} ){
         my %status;
-        $status{'devicecode'} = $device;
+        $status{'devicecode'} = uc $device;
         if ( $cmd =~ m{([a-z]+)_([a-z]+)_([a-z]+)_([a-z]+)_([a-z\d]+)} ){
             $status{'event'} = $1 . "_" . $2;
             my $alias =
-                defined $devcodes{$device} ? $devcodes{$device} : $device;
+                defined $devcodes{uc $device} ? $devcodes{uc $device} : $device;
 
             if ( $2 =~ m{alert} ) {
                 $status{'state'} = 'on';
