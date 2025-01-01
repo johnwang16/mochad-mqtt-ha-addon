@@ -728,7 +728,7 @@ sub process_x10_cmd {
     elsif ( $device =~ m{[A-Fa-f\d]{2}:[A-Fa-f\d]{2}:[A-Fa-f\d]{2}} ){
         my %status;
         $status{'devicecode'} = uc $device;
-        if ( $cmd =~ m{([a-z]+)_([a-z]+)_([a-z]+)_([a-z]+)_([a-z\d]+)} ){
+        if ( $cmd =~ m{([a-z]+)_([a-z]+)_([a-z]+)_([a-z]+_)?([a-z\d]+)} ){
             $status{'event'} = $1 . "_" . $2;
             my $alias =
                 defined $devcodes{uc $device} ? $devcodes{uc $device} : $device;
