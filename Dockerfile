@@ -2,6 +2,7 @@ ARG BUILD_FROM
 FROM $BUILD_FROM
 
 RUN apk add --update --no-cache wget bash perl perl-anyevent make perl-app-cpanminus perl-sub-name
+RUN cpanm Module::Pluggable --force
 RUN cpanm AnyEvent::MQTT
 
 # Copy data for add-on
