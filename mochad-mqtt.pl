@@ -630,7 +630,7 @@ sub process_x10_line {
             process_x10_cmd( "$1$2", $house );
         }
     }
-    elsif ( $input =~ m{ RFSEC\sAddr:\s([A-Z:\d]+)\sFunc:\s([a-z]+_[a-z]+_[a-z]+_[a-z]+_[a-z\d]+)}i ) {
+    elsif ( $input =~ m{ RFSEC\sAddr:\s([A-Z:\d]+)\sFunc:\s([a-z]+_[a-z]+_[a-z]+_([a-z]+_)+[a-z\d]+)}i ) {
         my $addr = $1;
         my $command = $2;
         process_x10_cmd($command, $addr);
