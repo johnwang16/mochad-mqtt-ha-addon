@@ -130,18 +130,18 @@ my $handle;
 my $handle_secondary;
 
 sub read_config_file {
-
-    die "Unable to read config file: $mm_config\n"
-      unless ( open CONFIG, '<' . $mm_config );
-    my $conf_text = join( '', <CONFIG> );
-    close CONFIG;
-    AE::log info => "Config => \"$conf_text\"";
-    my $conf = JSON::PP->new->decode($conf_text);
-
     unless ( $ENV{'AE_LOG'} || $ENV{'PERL_ANYEVENT_LOG'} ) {
         $ENV{'PERL_ANYEVENT_LOG'} = $conf->{'perl_anyevent_log'}
           if ( $conf->{'perl_anyevent_log'} );
     }
+    
+    die "Unable to read config file: $mm_config\n"
+      unless ( open CONFIG, '<' . $mm_config );
+    my $conf_text = join( '', <CONFIG> );
+    close CONFIG;
+    AE::log info => "Config $conf_text";
+    my $conf = JSON::PP->new->decode($conf_text);
+
 
     %alias    = ();
     %devcodes = ();
