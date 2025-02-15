@@ -58,6 +58,9 @@ my %config = (
     mochad_host           => 'localhost',
     mochad_port           => '1100',
     mochad_idle           => 300.0,
+    mochad_secondary_host => 'mochad',
+    mochad_secondary_port => '1099',
+    mochad_secondary_idle => 300.0,
     passthru      => 0,    # Publish all input from Mochad
     passthru_send => 0,    # Allow commands to pass directly to Mochad
     perl_anyevent_log => 'filter=info',
@@ -124,6 +127,7 @@ my $config_updated;
 my $config_mtime;
 
 my $handle;
+my $handle_secondary;
 
 sub read_config_file {
 
@@ -885,8 +889,33 @@ $handle = new AnyEvent::Handle
   },
   keepalive => 1,
   no_delay  => 1;
+  
+$handle_secondary = new AnyEvent::Handle
+  connect  => [ $config{'mochad_secondary_host'}, $config{'mochad_secondary_port'} ],
+  on_error => sub {
+    my ( $hdl, $fatal, $msg ) = @_;
+    AE::log error => $msg;
+    if ($fatal) {
+        AE::log error => "Fatal error - exiting";
+        exit(1);
+    }
+  },
+  keepalive => 1,
+  no_delay  => 1;
 
 $handle->on_read(
+    sub {
+        for ( split( /[\n\r]/, $_[0]->rbuf ) ) {
+            next unless length $_;
+
+            AE::log debug => "Received line: \"$_\"";
+            process_x10_line($_);
+        }
+        $_[0]->rbuf = "";
+    }
+);
+
+$handle_secondary->on_read(
     sub {
         for ( split( /[\n\r]/, $_[0]->rbuf ) ) {
             next unless length $_;
