@@ -135,7 +135,7 @@ sub read_config_file {
       unless ( open CONFIG, '<' . $mm_config );
     my $conf_text = join( '', <CONFIG> );
     close CONFIG;
-    AE::log info => config => \"$conf_text\"";
+    AE::log info => "Config => \"$conf_text\"";
     my $conf = JSON::PP->new->decode($conf_text);
 
     unless ( $ENV{'AE_LOG'} || $ENV{'PERL_ANYEVENT_LOG'} ) {
