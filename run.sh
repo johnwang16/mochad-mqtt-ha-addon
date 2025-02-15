@@ -33,6 +33,10 @@ sed -i "s/\"host\": \"xxxxxxxx\"/\"host\": \"$host\"/" /mochad-mqtt.json
 sed -i "s/\"user\": \"xxxxxxxx\"/\"user\": \"$username\"/" /mochad-mqtt.json
 sed -i "s/\"password\": \"xxxxxxxx\"/\"password\": \"$password\"/" /mochad-mqtt.json
 sed -i "s/\"port\": \"xxxxxxxx\"/\"port\": \"$port\"/" /mochad-mqtt.json
+sed -i "s/\"secondary_host\": \"xxxxxxxx\"/\"secondary_host\": \"$secondary_host\"/" /mochad-mqtt.json
+sed -i "s/\"secondary_user\": \"xxxxxxxx\"/\"secondary_user\": \"$secondary_username\"/" /mochad-mqtt.json
+sed -i "s/\"secondary_password\": \"xxxxxxxx\"/\"secondary_password\": \"$secondary_password\"/" /mochad-mqtt.json
+sed -i "s/\"secondary_port\": \"xxxxxxxx\"/\"secondary_port\": \"$secondary_port\"/" /mochad-mqtt.json
 
 
 #cat /mochad-mqtt.json
