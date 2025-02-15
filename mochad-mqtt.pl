@@ -57,10 +57,9 @@ my %config = (
     mqtt_idle             => 300.0,
     mochad_host           => 'localhost',
     mochad_port           => '1100',
-    mochad_idle           => 300.0,
     mochad_secondary_host => 'mochad',
     mochad_secondary_port => '1099',
-    mochad_secondary_idle => 300.0,
+    mochad_idle           => 300.0,
     passthru      => 0,    # Publish all input from Mochad
     passthru_send => 0,    # Allow commands to pass directly to Mochad
     perl_anyevent_log => 'filter=info',
@@ -130,17 +129,17 @@ my $handle;
 my $handle_secondary;
 
 sub read_config_file {
-    unless ( $ENV{'AE_LOG'} || $ENV{'PERL_ANYEVENT_LOG'} ) {
-        $ENV{'PERL_ANYEVENT_LOG'} = 'filter=info';
-    }
-    
+
     die "Unable to read config file: $mm_config\n"
       unless ( open CONFIG, '<' . $mm_config );
     my $conf_text = join( '', <CONFIG> );
     close CONFIG;
-    AE::log info => "Config $conf_text";
     my $conf = JSON::PP->new->decode($conf_text);
 
+    unless ( $ENV{'AE_LOG'} || $ENV{'PERL_ANYEVENT_LOG'} ) {
+        $ENV{'PERL_ANYEVENT_LOG'} = $conf->{'perl_anyevent_log'}
+          if ( $conf->{'perl_anyevent_log'} );
+    }
 
     %alias    = ();
     %devcodes = ();
