@@ -11,7 +11,7 @@ declare username
     username=$(bashio::services "mqtt" "username")
 
 
-cat /data/options.json
+#cat /data/options.json
 cp -f /data/options.json /mochad-mqtt.json
 sed -i -n '/{/{N/"name":/D}p' /mochad-mqtt.json
 sed -i '/"name":/{s/,/:{/}' /mochad-mqtt.json
@@ -33,7 +33,7 @@ sed -i "s/\"password\": \"xxxxxxxx\"/\"password\": \"$password\"/" /mochad-mqtt.
 sed -i "s/\"port\": \"xxxxxxxx\"/\"port\": \"$port\"/" /mochad-mqtt.json
 
 
-cat /mochad-mqtt.json
+#cat /mochad-mqtt.json
 
 perl /mochad-mqtt.pl
 
