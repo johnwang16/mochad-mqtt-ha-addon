@@ -131,8 +131,7 @@ my $handle_secondary;
 
 sub read_config_file {
     unless ( $ENV{'AE_LOG'} || $ENV{'PERL_ANYEVENT_LOG'} ) {
-        $ENV{'PERL_ANYEVENT_LOG'} = $conf->{'perl_anyevent_log'}
-          if ( $conf->{'perl_anyevent_log'} );
+        $ENV{'PERL_ANYEVENT_LOG'} = 'filter=info';
     }
     
     die "Unable to read config file: $mm_config\n"
