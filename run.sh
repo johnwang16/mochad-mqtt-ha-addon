@@ -4,7 +4,10 @@ declare host
 declare password
 declare port
 declare username
-
+declare secondary_host
+declare secondary_password
+declare secondary_port
+declare secondary_username
 
 
     host=$(bashio::services "mqtt" "host")
