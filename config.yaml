@@ -33,6 +33,9 @@ options:
   mochad:
     - host: "homeassistant"
       port: 1099
+  mochad_secondary:
+    - host: "mochad"
+      port: 1099
   hass:
     - discovery_enable: "true"
       startup_payload: "online"
@@ -52,6 +55,9 @@ schema:
       ping: str?
       prefix: str?
   mochad:
+    - host: str
+      port: port
+  mochad_secondary:
     - host: str
       port: port
   hass:
