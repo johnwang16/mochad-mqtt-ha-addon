@@ -873,30 +873,57 @@ if ( $config{hass_discovery_enable} ) {
 AE::log debug => Dumper( \%config );
 
 # first, connect to the host
-$handle = new AnyEvent::Handle
-  connect  => [ $config{'mochad_host'}, $config{'mochad_port'} ],
-  on_error => sub {
-    my ( $hdl, $fatal, $msg ) = @_;
-    AE::log error => $msg;
-    if ($fatal) {
-        AE::log error => "Fatal error - exiting";
-        exit(1);
-    }
-  },
-  keepalive => 1,
-  no_delay  => 1;
+my $connect_mochad;
+$connect_mochad = sub {
+    AE::log info => "Connecting to mochad at $config{'mochad_host'}:$config{'mochad_port'}";
+    $handle = new AnyEvent::Handle
+      connect  => [ $config{'mochad_host'}, $config{'mochad_port'} ],
+      on_error => sub {
+        my ( $hdl, $fatal, $msg ) = @_;
+        AE::log error => $msg;
+        $hdl->destroy;
+        AE::log info => "Reconnecting to mochad in 5 seconds...";
+        my $reconnect_timer; $reconnect_timer = AnyEvent->timer(
+            after => 5,
+            cb    => sub {
+                undef $reconnect_timer;
+                $connect_mochad->();
+            }
+        );
+      },
+      on_eof => sub {
+        my ($hdl) = @_;
+        AE::log error => "Connection closed by mochad (EOF)";
+        $hdl->destroy;
+        AE::log info => "Reconnecting to mochad in 5 seconds...";
+        my $reconnect_timer; $reconnect_timer = AnyEvent->timer(
+            after => 5,
+            cb    => sub {
+                undef $reconnect_timer;
+                $connect_mochad->();
+            }
+        );
+      },
+      keepalive => 1,
+      no_delay  => 1;
 
-$handle->on_read(
-    sub {
-        for ( split( /[\n\r]/, $_[0]->rbuf ) ) {
-            next unless length $_;
+    $handle->on_read(
+        sub {
+            for ( split( /[\n\r]/, $_[0]->rbuf ) ) {
+                next unless length $_;
 
-            AE::log debug => "Received line: \"$_\"";
-            process_x10_line($_);
+                AE::log debug => "Received line: \"$_\"";
+                process_x10_line($_);
+            }
+            $_[0]->rbuf = "";
         }
-        $_[0]->rbuf = "";
-    }
-);
+    );
+
+    $handle->push_write("rftopl 0\r");
+    $mochad_updated = AnyEvent->now;
+};
+
+$connect_mochad->();
 
 # Watch config file for changes
 
@@ -956,8 +983,6 @@ if ( $config{'mochad_idle'} > 0.0 ) {
         },
     );
 }
-
-$handle->push_write("rftopl 0\r");
 
 # use a condvar to return results
 my $cv = AnyEvent->condvar;
