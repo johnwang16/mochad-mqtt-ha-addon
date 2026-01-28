@@ -5,8 +5,6 @@ declare password
 declare port
 declare username
 
-
-
     host=$(bashio::services "mqtt" "host")
     password=$(bashio::services "mqtt" "password")
     port=$(bashio::services "mqtt" "port")

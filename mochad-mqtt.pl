@@ -57,6 +57,8 @@ my %config = (
     mqtt_idle             => 300.0,
     mochad_host           => 'localhost',
     mochad_port           => '1100',
+    mochad_secondary_host => 'mochad',
+    mochad_secondary_port => '1099',
     mochad_idle           => 300.0,
     passthru      => 0,    # Publish all input from Mochad
     passthru_send => 0,    # Allow commands to pass directly to Mochad
@@ -124,6 +126,7 @@ my $config_updated;
 my $config_mtime;
 
 my $handle;
+my $handle_secondary;
 
 sub read_config_file {
 
@@ -872,7 +875,7 @@ if ( $config{hass_discovery_enable} ) {
 
 AE::log debug => Dumper( \%config );
 
-# first, connect to the host
+# first, connect to the primary mochad host
 my $connect_mochad;
 $connect_mochad = sub {
     AE::log info => "Connecting to mochad at $config{'mochad_host'}:$config{'mochad_port'}";
@@ -924,6 +927,58 @@ $connect_mochad = sub {
 };
 
 $connect_mochad->();
+
+# connect to the secondary mochad host
+my $connect_mochad_secondary;
+$connect_mochad_secondary = sub {
+    AE::log info => "Connecting to secondary mochad at $config{'mochad_secondary_host'}:$config{'mochad_secondary_port'}";
+    $handle_secondary = new AnyEvent::Handle
+      connect  => [ $config{'mochad_secondary_host'}, $config{'mochad_secondary_port'} ],
+      on_error => sub {
+        my ( $hdl, $fatal, $msg ) = @_;
+        AE::log error => $msg;
+        $hdl->destroy;
+        AE::log info => "Reconnecting to secondary mochad in 5 seconds...";
+        my $reconnect_timer; $reconnect_timer = AnyEvent->timer(
+            after => 5,
+            cb    => sub {
+                undef $reconnect_timer;
+                $connect_mochad_secondary->();
+            }
+        );
+      },
+      on_eof => sub {
+        my ($hdl) = @_;
+        AE::log error => "Connection closed by secondary mochad (EOF)";
+        $hdl->destroy;
+        AE::log info => "Reconnecting to secondary mochad in 5 seconds...";
+        my $reconnect_timer; $reconnect_timer = AnyEvent->timer(
+            after => 5,
+            cb    => sub {
+                undef $reconnect_timer;
+                $connect_mochad_secondary->();
+            }
+        );
+      },
+      keepalive => 1,
+      no_delay  => 1;
+
+    $handle_secondary->on_read(
+        sub {
+            for ( split( /[\n\r]/, $_[0]->rbuf ) ) {
+                next unless length $_;
+
+                AE::log debug => "Received line: \"$_\"";
+                process_x10_line($_);
+            }
+            $_[0]->rbuf = "";
+        }
+    );
+
+    $mochad_updated = AnyEvent->now;
+};
+
+$connect_mochad_secondary->();
 
 # Watch config file for changes
 

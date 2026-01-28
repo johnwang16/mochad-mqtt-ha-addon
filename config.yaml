@@ -1,6 +1,6 @@
 ---
 name: "mochad-mqtt-ha-addon"
-version: 1.1.13
+version: 1.1.22
 slug: "mochad-mqtt-ha-addon"
 description: >
   Make X10 devices appear as MQTT devices. 
@@ -33,6 +33,8 @@ options:
   mochad:
     - host: "homeassistant"
       port: 1099
+      secondary_host: "mochad"
+      secondary_port: 1099
   hass:
     - discovery_enable: "true"
       startup_payload: "online"
@@ -54,6 +56,8 @@ schema:
   mochad:
     - host: str
       port: port
+      secondary_host: str
+      secondary_port: port
   hass:
     - discovery_enable: str?
       startup_payload: str?
